@@ -45,13 +45,6 @@ module encrypt(
     reg [31:0] b_rot;
     reg [31:0] b;
     
-    // Five Control States
-    reg [2:0] CLEAR = 3'b000;
-    reg [2:0] ST_IDLE = 3'b001;
-    reg [2:0] ST_PRE_ROUND = 3'b010;    
-    reg [2:0] ST_ROUND_OP = 3'b011;
-    reg [2:0] ST_READY = 3'b100;
-    
     // The current state of the application
     reg [2:0] CURRENT_STATE = 3'b000; 
     reg updateState = 1'b0;
@@ -77,13 +70,15 @@ module encrypt(
             i_cnt = 4'b0000;
         end
         // Data flow 4 control states
-        if (CURRENT_STATE == ST_IDLE) begin
+        //ST_IDLE
+        else if (CURRENT_STATE == 3'b001) begin
             if (clr == 1'b1 && di_vld == 1'b1) begin
                 // Move to ST_PRE_ROUND
                 updateState = 1'b1;
             end
-        end 
-        if (CURRENT_STATE == ST_PRE_ROUND) begin
+        end
+        //ST_PRE_ROUND
+        else if (CURRENT_STATE == 3'b010) begin
             // Data Path modeling
             // This is the preround
             // Slide 8 in Practicum Description
@@ -91,11 +86,12 @@ module encrypt(
             b = din[31:0] + skey[1];
            
             // Set the value to 1 before moving on
-            i_cnt = i_cnt + 1;
+            i_cnt = 4'b0001;
             // At the end of one clock cycle we move on
             updateState = 1'b1;
-        end 
-        if (CURRENT_STATE == ST_ROUND_OP) begin
+        end
+        //ST_ROUND_OP
+        else if (CURRENT_STATE == 3'b011) begin
             // Loop here for a while
             
             //Shared vars
@@ -139,7 +135,8 @@ module encrypt(
                 updateState = 1'b1;
             end
         end 
-        if (CURRENT_STATE == ST_READY) begin
+        //ST_READY
+        else if (CURRENT_STATE == 3'b100) begin
             // Do nothing
         end
         // Finally progress if needed
