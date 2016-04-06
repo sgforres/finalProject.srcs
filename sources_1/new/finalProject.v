@@ -12,47 +12,12 @@ This file contains the following high level modules:
 - Output
 */
 module encrypt(
-
+    input clr,
+    input clk,
+    input [63:0] din,
+    input di_vld,
+    output [63:0] dout
     );
-endmodule
-
-module decrypt(
-
-    );
-endmodule
-
-module keyGen(
-
-    );
-endmodule
-
-module inputModule(
-
-    );
-endmodule
-
-module outputModule(
-
-    );
-endmodule
-
-module finalProject(
-    clr,
-    clk,
-    din,
-    di_vld,
-    dout
-    );
-    
-        //******************************//
-    //IO signal defination
-    //******************************//
-    
-    input clr;
-    input clk;
-    input [63:0] din;
-    input di_vld;
-    output [63:0] dout;
 
     //******************************//
     //26 Encryption Keys used the design
@@ -66,7 +31,6 @@ module finalProject(
           32'h2799A4DD, 32'hA7901C49, 32'hDEDE871A, 32'h36C03196, 32'hA7EFC249,
           32'h61A78BB8, 32'h3B0A1D2B, 32'h4DBFCA76, 32'hAE162167, 32'h30D76B0A,
           32'h43192304, 32'hF6CC1431, 32'h65046380};
-    
     
     
     //******************************//
@@ -195,4 +159,30 @@ module finalProject(
             updateState = 1'b0;
         end
     end
+endmodule
+
+module decrypt(
+
+    );
+endmodule
+
+module keyGen(
+
+    );
+endmodule
+
+module inputModule(
+
+    );
+endmodule
+
+module outputModule(
+
+    );
+endmodule
+
+module finalProject(
+
+    );
+
 endmodule
