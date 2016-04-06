@@ -11,41 +11,30 @@ This file contains the following high level modules:
 - Input
 - Output
 */
+
 module encrypt(
     input clr,
     input clk,
     input [63:0] din,
     input di_vld,
-    output [63:0] dout
+    output reg [63:0] dout
     );
-
-    //******************************//
-    //26 Encryption Keys used the design
-    //The debugging data were generated based on these keys
-    //******************************//
     
     parameter [31:0] skey[0:25]=
-          {32'h9BBBD8C8, 32'h1A37F7FB, 32'h46F8E8C5,
-          32'h460C6085, 32'h70F83B8A, 32'h284B8303, 32'h513E1454, 32'hF621ED22,
-          32'h3125065D, 32'h11A83A5D, 32'hD427686B, 32'h713AD82D, 32'h4B792F99,
-          32'h2799A4DD, 32'hA7901C49, 32'hDEDE871A, 32'h36C03196, 32'hA7EFC249,
-          32'h61A78BB8, 32'h3B0A1D2B, 32'h4DBFCA76, 32'hAE162167, 32'h30D76B0A,
-          32'h43192304, 32'hF6CC1431, 32'h65046380};
-    
+      {32'h9BBBD8C8, 32'h1A37F7FB, 32'h46F8E8C5,
+      32'h460C6085, 32'h70F83B8A, 32'h284B8303, 32'h513E1454, 32'hF621ED22,
+      32'h3125065D, 32'h11A83A5D, 32'hD427686B, 32'h713AD82D, 32'h4B792F99,
+      32'h2799A4DD, 32'hA7901C49, 32'hDEDE871A, 32'h36C03196, 32'hA7EFC249,
+      32'h61A78BB8, 32'h3B0A1D2B, 32'h4DBFCA76, 32'hAE162167, 32'h30D76B0A,
+      32'h43192304, 32'hF6CC1431, 32'h65046380};
     
     //******************************//
-    //Please define your own intermediate signals here
-    //Below are some intermediate signals for your reference
-    //These signals corresponde to the datapath modeling 
-    //given in the design specification.
-    //Feel free to modify for your own design and debugging
+    // Please define your own intermediate signals here
+    // Below are some intermediate signals for your reference
+    // These signals corresponde to the datapath modeling 
+    // given in the design specification.
+    // Feel free to modify for your own design and debugging
     //******************************//
-    
-    wire clr;
-    wire clk;
-    wire [63:0] din;
-    wire di_vld;
-    reg [63:0] dout;
     
     reg [3:0] i_cnt;
     reg [31:0] ab_xor;
@@ -56,7 +45,7 @@ module encrypt(
     reg [31:0] b_rot;
     reg [31:0] b;
     
-    // Four Control States
+    // Five Control States
     reg [2:0] CLEAR = 3'b000;
     reg [2:0] ST_IDLE = 3'b001;
     reg [2:0] ST_PRE_ROUND = 3'b010;    
@@ -71,9 +60,10 @@ module encrypt(
     reg [31:0] tempShiftedVal;
     reg [31:0] tempShiftedVal2; 
     reg [4:0] doubleI; 
+    
     //*****************************//
     //*****************************//
-    //Start writing your own design code here
+    // Start writing your own design code here
     //*****************************//
     //*****************************//
     
@@ -124,7 +114,6 @@ module encrypt(
             tempShiftedVal2 = ab_xor >> (32 - (b[4:0]));
             a_rot = tempShiftedVal | tempShiftedVal2;
 
-            
             a = a_rot + skey[doubleI];
             
             // Slide 9 in Practicum Description
@@ -169,6 +158,7 @@ endmodule
 module keyGen(
 
     );
+    
 endmodule
 
 module inputModule(
