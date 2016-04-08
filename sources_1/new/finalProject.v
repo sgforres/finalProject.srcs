@@ -15,19 +15,11 @@ This file contains the following high level modules:
 module encrypt(
     input clr,
     input clk,
-    input [63:0] din,
+    input [63:0] dinValue,
+    input [127:0] dinKey,
     input di_vld,
     output reg [63:0] dout
     );
-    
-    parameter [31:0] skey[0:25]=
-      {32'h9BBBD8C8, 32'h1A37F7FB, 32'h46F8E8C5,
-      32'h460C6085, 32'h70F83B8A, 32'h284B8303, 32'h513E1454, 32'hF621ED22,
-      32'h3125065D, 32'h11A83A5D, 32'hD427686B, 32'h713AD82D, 32'h4B792F99,
-      32'h2799A4DD, 32'hA7901C49, 32'hDEDE871A, 32'h36C03196, 32'hA7EFC249,
-      32'h61A78BB8, 32'h3B0A1D2B, 32'h4DBFCA76, 32'hAE162167, 32'h30D76B0A,
-      32'h43192304, 32'hF6CC1431, 32'h65046380};
-    
     //******************************//
     // Please define your own intermediate signals here
     // Below are some intermediate signals for your reference
@@ -47,7 +39,6 @@ module encrypt(
     
     // The current state of the application
     reg [2:0] CURRENT_STATE = 3'b000; 
-    reg updateState = 1'b0;
     
     // Temp variables for the left rotation
     reg [31:0] tempShiftedVal;
@@ -59,7 +50,9 @@ module encrypt(
     // Start writing your own design code here
     //*****************************//
     //*****************************//
-    
+    wire [831:0] keyOut;
+    reg [31:0] skey[0:25];
+    keyGen key(dinKey, keyOut);
     // FSM
     always @(posedge clk) begin
         if (clr == 1'b0) begin
@@ -68,6 +61,11 @@ module encrypt(
             
             // Clear all variables
             i_cnt = 4'b0000;
+            
+            for (integer i=0; i<=25; i = i + 1) begin
+                skey[i][31:0] = keyOut[32*i+31 -: 32];
+            end
+            
         end
         // Data flow 4 control states
         //ST_IDLE
@@ -82,8 +80,8 @@ module encrypt(
             // Data Path modeling
             // This is the preround
             // Slide 8 in Practicum Description
-            a = din[63:32] + skey[0];
-            b = din[31:0] + skey[1];
+            a = dinValue[63:32] + skey[0][31:0];
+            b = dinValue[31:0] + skey[1][31:0];
            
             // Set the value to 1 before moving on
             i_cnt = 4'b0001;
@@ -110,7 +108,7 @@ module encrypt(
             tempShiftedVal2 = ab_xor >> (32 - (b[4:0]));
             a_rot = tempShiftedVal | tempShiftedVal2;
 
-            a = a_rot + skey[doubleI];
+            a = a_rot + skey[doubleI][31:0];
             
             // Slide 9 in Practicum Description
             // Part B 
@@ -123,7 +121,7 @@ module encrypt(
             tempShiftedVal2 = ba_xor >> (32 - (a[4:0]));
             b_rot = tempShiftedVal | tempShiftedVal2;
 
-            b = b_rot + skey[doubleI + 1]; 
+            b = b_rot + skey[doubleI + 1][31:0]; 
             
             // Part C
             dout[63:0] = {a[31:0],b[31:0]}; 
@@ -145,19 +143,12 @@ endmodule
 module decrypt(
     input clr,
     input clk,
-    input [63:0] din,
+    input [63:0] dinValue,
+    input [127:0] dinKey,
     input di_vld,
     output reg [63:0] dout
     );
-    
-        parameter [31:0] skey[0:25]=
-      {32'h9BBBD8C8, 32'h1A37F7FB, 32'h46F8E8C5,
-      32'h460C6085, 32'h70F83B8A, 32'h284B8303, 32'h513E1454, 32'hF621ED22,
-      32'h3125065D, 32'h11A83A5D, 32'hD427686B, 32'h713AD82D, 32'h4B792F99,
-      32'h2799A4DD, 32'hA7901C49, 32'hDEDE871A, 32'h36C03196, 32'hA7EFC249,
-      32'h61A78BB8, 32'h3B0A1D2B, 32'h4DBFCA76, 32'hAE162167, 32'h30D76B0A,
-      32'h43192304, 32'hF6CC1431, 32'h65046380};
-    
+
     //******************************//
     // Please define your own intermediate signals here
     // Below are some intermediate signals for your reference
@@ -189,6 +180,9 @@ module decrypt(
     // Start writing your own design code here
     //*****************************//
     //*****************************//
+    wire [831:0] keyOut;
+    reg [31:0] skey[0:25];
+    keyGen key(dinKey, keyOut);
     
     // FSM
     always @(posedge clk) begin
@@ -198,6 +192,10 @@ module decrypt(
             
             // Clear all variables
             i_cnt = 4'b1100;
+            
+            for (integer i=0; i<=25; i = i + 1) begin
+                skey[i][31:0] = keyOut[32*i+31 -: 32];
+            end
         end
         // Data flow 4 control states
         //ST_IDLE
@@ -212,8 +210,8 @@ module decrypt(
             // Data Path modeling
             // This is the preround
             // Slide 7
-            a = din[63:32];
-            b = din[31:0];
+            a = dinValue[63:32];
+            b = dinValue[31:0];
            
             // Set the value to 12 before moving on
             i_cnt = 4'b1100;
@@ -231,7 +229,7 @@ module decrypt(
             // This is the Round
             // Slide 7
             // B = ((B - S[2×i +1]) >>> A[4:0]) xor A;
-            b_rot = b - skey[doubleI + 1];
+            b_rot = b - skey[doubleI + 1][31:0];
             
             // Right Rotation
             tempShiftedVal = b_rot >> a[4:0];
@@ -243,7 +241,7 @@ module decrypt(
             b = b_rot ^ a;
             
             // A = ((A - S[2×i]) >>> B[4:0]) xor B;
-            a_rot = a - skey[doubleI];
+            a_rot = a - skey[doubleI][31:0];
          
             // Right Rotation
             tempShiftedVal = a_rot >> b[4:0];
@@ -266,8 +264,8 @@ module decrypt(
         end 
         //ST_READY
         else if (CURRENT_STATE == 3'b100) begin
-            b = b - skey[1];
-            a = a - skey[0];
+            b = b - skey[1][31:0];
+            a = a - skey[0][31:0];
             dout[63:0] = {a[31:0],b[31:0]};
             // Do nothing
         end
@@ -275,9 +273,12 @@ module decrypt(
 endmodule
 
 module keyGen(
-
+    input [127:0] din,
+    output [831:0] dout // 26 elements, 32 bits each
     );
     
+  assign dout = 832'h65046380F6CC14314319230430D76B0AAE1621674DBFCA763B0A1D2B61A78BB8A7EFC24936C03196DEDE871AA7901C492799A4DD4B792F99713AD82DD427686B11A83A5D3125065DF621ED22513E1454284B830370F83B8A460C608546F8E8C51A37F7FB9BBBD8C8;
+  
 endmodule
 
 module inputModule(
