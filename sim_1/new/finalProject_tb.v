@@ -29,7 +29,7 @@ module finalProject_tb;
     initial begin
       clr = 1'b 0;
       clk = 1'b 0;
-      din = 64'h0;
+      din = 64'heedba5216d8f4b15;
       dinKey = 127'h 1;
       di_vld = 1'b 0;
       #100 begin

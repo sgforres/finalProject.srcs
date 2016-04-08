@@ -267,6 +267,7 @@ module decrypt(
             b = b - skey[1][31:0];
             a = a - skey[0][31:0];
             dout[63:0] = {a[31:0],b[31:0]};
+            CURRENT_STATE = 3'b101;
             // Do nothing
         end
     end
