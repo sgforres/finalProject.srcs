@@ -14,8 +14,9 @@ module finalProject_tb;
     //The debugging data were generated based on these keys
     //******************************//
     
-    // Test Encrypt
+    // Test Encrypt and Decrypt
     reg [63:0] din;
+    reg [63:0] din2;
     reg [127:0] dinKey;
     wire [63:0] dout;
     wire [63:0] dout2;
@@ -24,12 +25,13 @@ module finalProject_tb;
     reg di_vld;
     
     encrypt test(clr,clk,din,dinKey,di_vld,dout);
-    decrypt test2(clr,clk,din,dinKey,di_vld,dout2);
+    decrypt test2(clr,clk,din2,dinKey,di_vld,dout2);
     
     initial begin
       clr = 1'b 0;
       clk = 1'b 0;
-      din = 64'heedba5216d8f4b15;
+      din = 64'h0;
+      din2 = 64'heedba5216d8f4b15;
       dinKey = 127'h 1;
       di_vld = 1'b 0;
       #100 begin

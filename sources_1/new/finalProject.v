@@ -12,6 +12,60 @@ This file contains the following high level modules:
 - Output
 */
 
+module pipelineEncrypt(
+    input clk,
+    input [31:0] a,
+    input [31:0] b,
+    input [31:0] skey,
+    input [31:0] skey2,
+    output reg [63:0] dout,
+    output reg [31:0] aout, 
+    output reg [31:0] bout
+    );
+    reg [31:0] ab_xor;
+    reg [31:0] a_rot;
+    reg [31:0] ba_xor;
+    reg [31:0] b_rot;
+    
+    // Temp variables for the left rotation
+    reg [31:0] tempShiftedVal;
+    reg [31:0] tempShiftedVal2; 
+    
+    always @(posedge clk) begin
+        // Data Path modeling
+        // This is the Round
+        // Slide 8 in Practicum Description
+        // Part A
+        // a = ((a xor b) <<< b[4:0]) + skey[2×i];
+        ab_xor = a ^ b;
+        
+        // Left Rotation Operation
+        tempShiftedVal = ab_xor << b[4:0];
+        // Now shift in the other direction so we can combine the output
+        tempShiftedVal2 = ab_xor >> (32 - (b[4:0]));
+        a_rot = tempShiftedVal | tempShiftedVal2;
+    
+        aout = a_rot + skey;
+        
+        // Slide 9 in Practicum Description
+        // Part B 
+        //b = ((b xor a) <<< a[4:0]) + skey[2×i + 1];
+        ba_xor = b ^ aout;
+    
+        // Left Rotation Operation
+        tempShiftedVal = ba_xor << aout[4:0];
+        // Now shift in the other direction so we can combine the output
+        tempShiftedVal2 = ba_xor >> (32 - (aout[4:0]));
+        b_rot = tempShiftedVal | tempShiftedVal2;
+    
+        bout = b_rot + skey2; 
+        
+        // Part C
+        dout[63:0] = {aout[31:0],bout[31:0]}; 
+    
+    end
+endmodule
+   
 module encrypt(
     input clr,
     input clk,
@@ -53,6 +107,7 @@ module encrypt(
     wire [831:0] keyOut;
     reg [31:0] skey[0:25];
     keyGen key(dinKey, keyOut);
+    
     // FSM
     always @(posedge clk) begin
         if (clr == 1'b0) begin
@@ -170,7 +225,7 @@ module decrypt(
     reg [2:0] CURRENT_STATE = 3'b000; 
     reg updateState = 1'b0;
     
-    // Temp variables for the left rotation
+    // Temp variables for the right rotation
     reg [31:0] tempShiftedVal;
     reg [31:0] tempShiftedVal2; 
     reg [4:0] doubleI; 
