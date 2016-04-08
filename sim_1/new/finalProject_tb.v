@@ -17,12 +17,13 @@ module finalProject_tb;
     // Test Encrypt
     reg [63:0] din;
     wire [63:0] dout;
+    wire [63:0] dout2;
     reg clr;
     reg clk;
     reg di_vld;
     
-    
     encrypt test(clr,clk,din,di_vld,dout);
+    decrypt test2(clr,clk,din,di_vld,dout2);
     
     initial begin
       clr = 1'b 0;
