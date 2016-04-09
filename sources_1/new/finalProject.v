@@ -12,62 +12,6 @@ This file contains the following high level modules:
 - Output
 */
 
-module pipelineEncrypt(
-    input clk,
-    input [31:0] a,
-    input [31:0] b,
-    input [31:0] skey,
-    input [31:0] skey2,
-    output reg [63:0] dout,
-    output reg [31:0] aout, 
-    output reg [31:0] bout,
-    input [2:0] CURRENT_STATE
-    );
-    reg [31:0] ab_xor;
-    reg [31:0] a_rot;
-    reg [31:0] ba_xor;
-    reg [31:0] b_rot;
-    
-    // Temp variables for the left rotation
-    reg [31:0] tempShiftedVal;
-    reg [31:0] tempShiftedVal2; 
-    
-    always @(posedge clk) begin
-        if (CURRENT_STATE == 3'b011) begin
-            // Data Path modeling
-            // This is the Round
-            // Slide 8 in Practicum Description
-            // Part A
-            // a = ((a xor b) <<< b[4:0]) + skey[2×i];
-            ab_xor = a ^ b;
-            
-            // Left Rotation Operation
-            tempShiftedVal = ab_xor << b[4:0];
-            // Now shift in the other direction so we can combine the output
-            tempShiftedVal2 = ab_xor >> (32 - (b[4:0]));
-            a_rot = tempShiftedVal | tempShiftedVal2;
-        
-            aout = a_rot + skey;
-            
-            // Slide 9 in Practicum Description
-            // Part B 
-            //b = ((b xor a) <<< a[4:0]) + skey[2×i + 1];
-            ba_xor = b ^ aout;
-        
-            // Left Rotation Operation
-            tempShiftedVal = ba_xor << aout[4:0];
-            // Now shift in the other direction so we can combine the output
-            tempShiftedVal2 = ba_xor >> (32 - (aout[4:0]));
-            b_rot = tempShiftedVal | tempShiftedVal2;
-        
-            bout = b_rot + skey2; 
-            
-            // Part C
-            dout[63:0] = {aout[31:0],bout[31:0]}; 
-        end
-    end
-endmodule
-   
 module encrypt(
     input clr,
     input clk,
@@ -103,47 +47,47 @@ module encrypt(
     // Variables for pipeline
     wire [31:0] aOut1;
     wire [31:0] bOut1;
-    wire [31:0] dOut1;
+    wire [63:0] dOut1;
     wire [31:0] aOut2;
     wire [31:0] bOut2;
-    wire [31:0] dOut2;
+    wire [63:0] dOut2;
     wire [31:0] aOut3;
     wire [31:0] bOut3;
-    wire [31:0] dOut3;
+    wire [63:0] dOut3;
     wire [31:0] aOut4;
     wire [31:0] bOut4;
-    wire [31:0] dOut4;
+    wire [63:0] dOut4;
     wire [31:0] aOut5;
     wire [31:0] bOut5;
-    wire [31:0] dOut5;
+    wire [63:0] dOut5;
     wire [31:0] aOut6;
     wire [31:0] bOut6;
-    wire [31:0] dOut6;
+    wire [63:0] dOut6;
     wire [31:0] aOut7;
     wire [31:0] bOut7;
-    wire [31:0] dOut7;
+    wire [63:0] dOut7;
     wire [31:0] aOut8;
     wire [31:0] bOut8;
-    wire [31:0] dOut8;
+    wire [63:0] dOut8;
     wire [31:0] aOut9;
     wire [31:0] bOut9;
-    wire [31:0] dOut9;
+    wire [63:0] dOut9;
     wire [31:0] aOut10;
     wire [31:0] bOut10;
-    wire [31:0] dOut10;
+    wire [63:0] dOut10;
     wire [31:0] aOut11;
     wire [31:0] bOut11;
-    wire [31:0] dOut11;
+    wire [63:0] dOut11;
     wire [31:0] aOut12;
     wire [31:0] bOut12;
-    wire [31:0] dOut12;
+    wire [63:0] dOut12;
     
     // Pipeline
     pipelineEncrypt  p1(clk, a, b, skey[2][31:0],skey[3][31:0],dOut1,aOut1,bOut1, CURRENT_STATE);
-    pipelineEncrypt  p2(clk, aOut1, bOut1, skey[4][31:0],skey[5][31:0],dout2,aOut2,bOut2,CURRENT_STATE);
+    pipelineEncrypt  p2(clk, aOut1, bOut1, skey[4][31:0],skey[5][31:0],dOut2,aOut2,bOut2,CURRENT_STATE);
     pipelineEncrypt  p3(clk, aOut2, bOut2, skey[6][31:0],skey[7][31:0],dOut3,aOut3,bOut3,CURRENT_STATE);
-    pipelineEncrypt  p4(clk, aOut3, bOut3, skey[8][31:0],skey[9][31:0],dout4,aOut4,bOut4,CURRENT_STATE);
-    pipelineEncrypt  p5(clk, aOut4, bOut4, skey[10][31:0],skey[11][31:0],dout5,aOut5,bOut5,CURRENT_STATE);
+    pipelineEncrypt  p4(clk, aOut3, bOut3, skey[8][31:0],skey[9][31:0],dOut4,aOut4,bOut4,CURRENT_STATE);
+    pipelineEncrypt  p5(clk, aOut4, bOut4, skey[10][31:0],skey[11][31:0],dOut5,aOut5,bOut5,CURRENT_STATE);
     pipelineEncrypt  p6(clk, aOut5, bOut5, skey[12][31:0],skey[13][31:0],dOut6,aOut6,bOut6,CURRENT_STATE);
     pipelineEncrypt  p7(clk, aOut6, bOut6, skey[14][31:0],skey[15][31:0],dOut7,aOut7,bOut7,CURRENT_STATE);
     pipelineEncrypt  p8(clk, aOut7, bOut7, skey[16][31:0],skey[17][31:0],dOut8,aOut8,bOut8,CURRENT_STATE);
@@ -221,23 +165,13 @@ module decrypt(
     //******************************//
     
     reg [3:0] i_cnt;
-    reg [31:0] ab_xor;
-    reg [31:0] a_rot;
     reg [31:0] a;
-    
-    reg [31:0] ba_xor;
-    reg [31:0] b_rot;
     reg [31:0] b;
     
     // The current state of the application
     reg [2:0] CURRENT_STATE = 3'b000; 
     reg updateState = 1'b0;
-    
-    // Temp variables for the right rotation
-    reg [31:0] tempShiftedVal;
-    reg [31:0] tempShiftedVal2; 
-    reg [4:0] doubleI; 
-    
+
     //*****************************//
     //*****************************//
     // Start writing your own design code here
@@ -246,6 +180,59 @@ module decrypt(
     wire [831:0] keyOut;
     reg [31:0] skey[0:25];
     keyGen key(dinKey, keyOut);
+    
+    // Variables for pipeline
+    wire [31:0] aOut1;
+    wire [31:0] bOut1;
+    wire [63:0] dOut1;
+    wire [31:0] aOut2;
+    wire [31:0] bOut2;
+    wire [63:0] dOut2;
+    wire [31:0] aOut3;
+    wire [31:0] bOut3;
+    wire [63:0] dOut3;
+    wire [31:0] aOut4;
+    wire [31:0] bOut4;
+    wire [63:0] dOut4;
+    wire [31:0] aOut5;
+    wire [31:0] bOut5;
+    wire [63:0] dOut5;
+    wire [31:0] aOut6;
+    wire [31:0] bOut6;
+    wire [63:0] dOut6;
+    wire [31:0] aOut7;
+    wire [31:0] bOut7;
+    wire [63:0] dOut7;
+    wire [31:0] aOut8;
+    wire [31:0] bOut8;
+    wire [63:0] dOut8;
+    wire [31:0] aOut9;
+    wire [31:0] bOut9;
+    wire [63:0] dOut9;
+    wire [31:0] aOut10;
+    wire [31:0] bOut10;
+    wire [63:0] dOut10;
+    wire [31:0] aOut11;
+    wire [31:0] bOut11;
+    wire [63:0] dOut11;
+    wire [31:0] aOut12;
+    wire [31:0] bOut12;
+    wire [63:0] dOut12;
+    
+    
+    // Pipeline
+    pipelineDecrypt  p1(clk, a, b, skey[25][31:0],skey[24][31:0],dOut1,aOut1,bOut1, CURRENT_STATE);
+    pipelineDecrypt  p2(clk, aOut1, bOut1, skey[23][31:0],skey[22][31:0],dOut2,aOut2,bOut2,CURRENT_STATE);
+    pipelineDecrypt  p3(clk, aOut2, bOut2, skey[21][31:0],skey[20][31:0],dOut3,aOut3,bOut3,CURRENT_STATE);
+    pipelineDecrypt  p4(clk, aOut3, bOut3, skey[19][31:0],skey[18][31:0],dOut4,aOut4,bOut4,CURRENT_STATE);
+    pipelineDecrypt  p5(clk, aOut4, bOut4, skey[17][31:0],skey[16][31:0],dOut5,aOut5,bOut5,CURRENT_STATE);
+    pipelineDecrypt  p6(clk, aOut5, bOut5, skey[15][31:0],skey[14][31:0],dOut6,aOut6,bOut6,CURRENT_STATE);
+    pipelineDecrypt  p7(clk, aOut6, bOut6, skey[13][31:0],skey[12][31:0],dOut7,aOut7,bOut7,CURRENT_STATE);
+    pipelineDecrypt  p8(clk, aOut7, bOut7, skey[11][31:0],skey[10][31:0],dOut8,aOut8,bOut8,CURRENT_STATE);
+    pipelineDecrypt  p9(clk, aOut8, bOut8, skey[9][31:0],skey[8][31:0],dOut9,aOut9,bOut9,CURRENT_STATE);
+    pipelineDecrypt  p10(clk, aOut9, bOut9, skey[7][31:0],skey[6][31:0],dOut10,aOut10,bOut10,CURRENT_STATE);
+    pipelineDecrypt  p11(clk, aOut10, bOut10, skey[5][31:0],skey[4][31:0],dOut11,aOut11,bOut11,CURRENT_STATE);
+    pipelineDecrypt  p12(clk, aOut11, bOut11, skey[3][31:0],skey[2][31:0],dOut12,aOut12,bOut12,CURRENT_STATE);
     
     // FSM
     always @(posedge clk) begin
@@ -283,41 +270,6 @@ module decrypt(
         end
         //ST_ROUND_OP
         else if (CURRENT_STATE == 3'b011) begin
-            // Loop here for a while
-            
-            //Shared vars
-            doubleI = i_cnt << 1;
-            
-            // Data Path modeling
-            // This is the Round
-            // Slide 7
-            // B = ((B - S[2×i +1]) >>> A[4:0]) xor A;
-            b_rot = b - skey[doubleI + 1][31:0];
-            
-            // Right Rotation
-            tempShiftedVal = b_rot >> a[4:0];
-            // Now shift in the other direction so we can combine the output
-            tempShiftedVal2 = b_rot << (32 - (a[4:0]));
-            b_rot = tempShiftedVal | tempShiftedVal2;
-            
-            // XOR A
-            b = b_rot ^ a;
-            
-            // A = ((A - S[2×i]) >>> B[4:0]) xor B;
-            a_rot = a - skey[doubleI][31:0];
-         
-            // Right Rotation
-            tempShiftedVal = a_rot >> b[4:0];
-            // Now shift in the other direction so we can combine the output
-            tempShiftedVal2 = a_rot << (32 - (b[4:0]));
-            a_rot = tempShiftedVal | tempShiftedVal2;
-            
-            //XOR B
-            a = a_rot ^ b;
-         
-            // Part C
-            dout[63:0] = {a[31:0],b[31:0]};
-            
             // Perform the round operations
             i_cnt = i_cnt - 1;
             // After we have finished the 12 rounds we move onto ST_READY
@@ -327,8 +279,8 @@ module decrypt(
         end 
         //ST_READY
         else if (CURRENT_STATE == 3'b100) begin
-            b = b - skey[1][31:0];
-            a = a - skey[0][31:0];
+            b = bOut12 - skey[1][31:0];
+            a = aOut12 - skey[0][31:0];
             dout[63:0] = {a[31:0],b[31:0]};
             CURRENT_STATE = 3'b101;
             // Do nothing
@@ -344,6 +296,119 @@ module keyGen(
   assign dout = 832'h65046380F6CC14314319230430D76B0AAE1621674DBFCA763B0A1D2B61A78BB8A7EFC24936C03196DEDE871AA7901C492799A4DD4B792F99713AD82DD427686B11A83A5D3125065DF621ED22513E1454284B830370F83B8A460C608546F8E8C51A37F7FB9BBBD8C8;
   
 endmodule
+
+module pipelineEncrypt(
+    input clk,
+    input [31:0] a,
+    input [31:0] b,
+    input [31:0] skey,
+    input [31:0] skey2,
+    output reg [63:0] dout,
+    output reg [31:0] aout, 
+    output reg [31:0] bout,
+    input [2:0] CURRENT_STATE
+    );
+    reg [31:0] ab_xor;
+    reg [31:0] a_rot;
+    reg [31:0] ba_xor;
+    reg [31:0] b_rot;
+    
+    // Temp variables for the left rotation
+    reg [31:0] tempShiftedVal;
+    reg [31:0] tempShiftedVal2; 
+    
+    always @(posedge clk) begin
+        if (CURRENT_STATE == 3'b011) begin
+            // Data Path modeling
+            // This is the Round
+            // Slide 8 in Practicum Description
+            // Part A
+            // a = ((a xor b) <<< b[4:0]) + skey[2×i];
+            ab_xor = a ^ b;
+            
+            // Left Rotation Operation
+            tempShiftedVal = ab_xor << b[4:0];
+            // Now shift in the other direction so we can combine the output
+            tempShiftedVal2 = ab_xor >> (32 - (b[4:0]));
+            a_rot = tempShiftedVal | tempShiftedVal2;
+        
+            aout = a_rot + skey;
+            
+            // Slide 9 in Practicum Description
+            // Part B 
+            //b = ((b xor a) <<< a[4:0]) + skey[2×i + 1];
+            ba_xor = b ^ aout;
+        
+            // Left Rotation Operation
+            tempShiftedVal = ba_xor << aout[4:0];
+            // Now shift in the other direction so we can combine the output
+            tempShiftedVal2 = ba_xor >> (32 - (aout[4:0]));
+            b_rot = tempShiftedVal | tempShiftedVal2;
+        
+            bout = b_rot + skey2; 
+            
+            // Part C
+            dout[63:0] = {aout[31:0],bout[31:0]}; 
+        end
+    end
+endmodule
+   
+module pipelineDecrypt(
+    input clk,
+    input [31:0] a,
+    input [31:0] b,
+    input [31:0] skey,
+    input [31:0] skey2,
+    output reg [63:0] dout,
+    output reg [31:0] aout, 
+    output reg [31:0] bout,
+    input [2:0] CURRENT_STATE
+    );
+    reg [31:0] ab_xor;
+    reg [31:0] a_rot;
+    reg [31:0] ba_xor;
+    reg [31:0] b_rot;
+    
+    // Temp variables for the right rotation
+    reg [31:0] tempShiftedVal;
+    reg [31:0] tempShiftedVal2; 
+    
+    always @(posedge clk) begin
+        if (CURRENT_STATE == 3'b011) begin
+            // Data Path modeling
+            // This is the Round
+            // Slide 7
+            // B = ((B - S[2×i +1]) >>> A[4:0]) xor A;
+            b_rot = b - skey;
+            
+            // Right Rotation
+            tempShiftedVal = b_rot >> a[4:0];
+            // Now shift in the other direction so we can combine the output
+            tempShiftedVal2 = b_rot << (32 - (a[4:0]));
+            b_rot = tempShiftedVal | tempShiftedVal2;
+            
+            // XOR A
+            bout = b_rot ^ a;
+            
+            // A = ((A - S[2×i]) >>> B[4:0]) xor B;
+            a_rot = a - skey2;
+         
+            // Right Rotation
+            tempShiftedVal = a_rot >> bout[4:0];
+            // Now shift in the other direction so we can combine the output
+            tempShiftedVal2 = a_rot << (32 - (bout[4:0]));
+            a_rot = tempShiftedVal | tempShiftedVal2;
+            
+            //XOR B
+            aout = a_rot ^ bout;
+         
+            // Part C
+            dout[63:0] = {aout[31:0],bout[31:0]};
+        
+        end
+    end
+endmodule
+   
 
 module inputModule(
 
