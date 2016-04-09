@@ -29,6 +29,7 @@ module encrypt(
     //******************************//
     
     reg [3:0] i_cnt;
+    reg [5:0] loopCount;
     reg [31:0] a;
     reg [31:0] b;
     
@@ -40,6 +41,8 @@ module encrypt(
     // Start writing your own design code here
     //*****************************//
     //*****************************//
+    
+    // Go and generate the keys
     wire [831:0] keyOut;
     reg [31:0] skey[0:25];
     keyGen key(dinKey, keyOut);
@@ -105,8 +108,8 @@ module encrypt(
             // Clear all variables
             i_cnt = 4'b0000;
             
-            for (integer i=0; i<=25; i = i + 1) begin
-                skey[i][31:0] = keyOut[32*i+31 -: 32];
+            for (loopCount=0; loopCount<=25; loopCount = loopCount + 1) begin
+                skey[loopCount][31:0] = keyOut[32*loopCount+31 -: 32];
             end
             
         end
@@ -165,18 +168,20 @@ module decrypt(
     //******************************//
     
     reg [3:0] i_cnt;
+    reg [5:0] loopCount;
     reg [31:0] a;
     reg [31:0] b;
     
     // The current state of the application
     reg [2:0] CURRENT_STATE = 3'b000; 
-    reg updateState = 1'b0;
 
     //*****************************//
     //*****************************//
     // Start writing your own design code here
     //*****************************//
     //*****************************//
+    
+    // Go and generate the keys
     wire [831:0] keyOut;
     reg [31:0] skey[0:25];
     keyGen key(dinKey, keyOut);
@@ -243,8 +248,8 @@ module decrypt(
             // Clear all variables
             i_cnt = 4'b1100;
             
-            for (integer i=0; i<=25; i = i + 1) begin
-                skey[i][31:0] = keyOut[32*i+31 -: 32];
+            for (loopCount=0; loopCount<=25; loopCount = loopCount + 1) begin
+                skey[loopCount][31:0] = keyOut[32*loopCount+31 -: 32];
             end
         end
         // Data flow 4 control states
