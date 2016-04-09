@@ -20,14 +20,7 @@ module encrypt(
     input di_vld,
     output [63:0] dout
     );
-    //******************************//
-    // Please define your own intermediate signals here
-    // Below are some intermediate signals for your reference
-    // These signals corresponde to the datapath modeling 
-    // given in the design specification.
-    // Feel free to modify for your own design and debugging
-    //******************************//
-    
+
     reg [3:0] i_cnt;
     reg [5:0] loopCount;
     reg [31:0] a;
@@ -36,12 +29,6 @@ module encrypt(
     // The current state of the application
     reg [2:0] CURRENT_STATE = 3'b000; 
 
-    //*****************************//
-    //*****************************//
-    // Start writing your own design code here
-    //*****************************//
-    //*****************************//
-    
     // Go and generate the keys
     wire [831:0] keyOut;
     reg [31:0] skey[0:25];
@@ -158,14 +145,6 @@ module decrypt(
     input di_vld,
     output reg [63:0] dout
     );
-
-    //******************************//
-    // Please define your own intermediate signals here
-    // Below are some intermediate signals for your reference
-    // These signals corresponde to the datapath modeling 
-    // given in the design specification.
-    // Feel free to modify for your own design and debugging
-    //******************************//
     
     reg [3:0] i_cnt;
     reg [5:0] loopCount;
@@ -174,12 +153,6 @@ module decrypt(
     
     // The current state of the application
     reg [2:0] CURRENT_STATE = 3'b000; 
-
-    //*****************************//
-    //*****************************//
-    // Start writing your own design code here
-    //*****************************//
-    //*****************************//
     
     // Go and generate the keys
     wire [831:0] keyOut;
