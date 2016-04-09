@@ -295,11 +295,61 @@ endmodule
 
 module keyGen(
     input [127:0] din,
-    output [831:0] dout // 26 elements, 32 bits each
+    output reg [831:0] dout // 26 elements, 32 bits each
     );
-    
-  assign dout = 832'h65046380F6CC14314319230430D76B0AAE1621674DBFCA763B0A1D2B61A78BB8A7EFC24936C03196DEDE871AA7901C492799A4DD4B792F99713AD82DD427686B11A83A5D3125065DF621ED22513E1454284B830370F83B8A460C608546F8E8C51A37F7FB9BBBD8C8;
+    // Old output, Uncomment if you want to check against practicum numbers
+    //assign dout = 832'h65046380F6CC14314319230430D76B0AAE1621674DBFCA763B0A1D2B61A78BB8A7EFC24936C03196DEDE871AA7901C492799A4DD4B792F99713AD82DD427686B11A83A5D3125065DF621ED22513E1454284B830370F83B8A460C608546F8E8C51A37F7FB9BBBD8C8;
   
+    reg [7:0] loopCount;
+    reg [7:0] i = 8'b0;
+    reg [7:0] j = 8'b0;
+    reg [31:0] L[0:3];
+    reg [31:0] S[0:25];
+    reg [31:0] A = 32'b0;
+    reg [31:0] B = 32'b0;
+    reg [31:0] A_intermediate = 32'b0;
+    reg [31:0] B_intermediate = 32'b0;
+    
+        // Temp variables for the left rotation
+    reg [31:0] tempShiftedVal;
+    reg [31:0] tempShiftedVal2; 
+    
+    always @(din) begin
+        // Slide 5, Initialize S
+        S[0][31:0] = 32'hB7E15163;
+        for (loopCount=1; loopCount<=25; loopCount = loopCount + 1) begin
+            S[loopCount][31:0] = S[loopCount - 1][31:0] + 32'h9E3779B9 ;
+        end  
+        // Slide 5, Initialize L
+        for (loopCount=0; loopCount<=3; loopCount = loopCount + 1) begin
+            L[loopCount][31:0] = din[32*loopCount+31 -: 32];
+        end
+        // Slide 5, Round Key Generation
+        for (loopCount=0; loopCount<=77; loopCount = loopCount + 1) begin
+            A_intermediate  = (S[i] + A + B);// <<< 3;
+            // Left Rotation Operation
+            tempShiftedVal = A_intermediate << 3;
+            // Now shift in the other direction so we can combine the output
+            tempShiftedVal2 = A_intermediate >> (32 - 3);
+            A = tempShiftedVal | tempShiftedVal2;
+            
+            B_intermediate  = (L[j] + A + B);// <<< (A + B);
+            // Left Rotation Operation
+            tempShiftedVal = B_intermediate << (A + B);
+            // Now shift in the other direction so we can combine the output
+            tempShiftedVal2 = B_intermediate >> (32 - (A + B));
+            B = tempShiftedVal | tempShiftedVal2; 
+            
+            A = S[i];
+            B = L [j];
+            i = (i + 1) % 26;
+            j = (j + 1) % 4;
+        end  
+        // Need to build up the return array
+        for (loopCount=0; loopCount<=25; loopCount = loopCount + 1) begin
+            dout[32*loopCount+31 -: 32] = S[loopCount][31:0];
+        end 
+    end
 endmodule
 
 module pipelineEncrypt(
