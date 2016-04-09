@@ -197,7 +197,6 @@ module decrypt(
     wire [31:0] bOut12;
     wire [63:0] dOut12;
     
-    
     // Pipeline
     pipelineDecrypt  p1(clk, a, b, skey[25][31:0],skey[24][31:0],dOut1,aOut1,bOut1, CURRENT_STATE);
     pipelineDecrypt  p2(clk, aOut1, bOut1, skey[23][31:0],skey[22][31:0],dOut2,aOut2,bOut2,CURRENT_STATE);
@@ -283,7 +282,7 @@ module keyGen(
     reg [31:0] A_intermediate = 32'b0;
     reg [31:0] B_intermediate = 32'b0;
     
-        // Temp variables for the left rotation
+    // Temp variables for the left rotation
     reg [31:0] tempShiftedVal;
     reg [31:0] tempShiftedVal2; 
     
@@ -313,6 +312,7 @@ module keyGen(
             tempShiftedVal2 = B_intermediate >> (32 - (A + B));
             B = tempShiftedVal | tempShiftedVal2; 
             
+                
             A = S[i];
             B = L [j];
             i = (i + 1) % 26;
