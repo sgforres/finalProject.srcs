@@ -483,11 +483,12 @@ module readAndWriteSRAM(
 endmodule
 
 module finalProject(
+    input DDRclk,
     input clk,
     input clr
     );
     reg write = 1'b1;
     reg read = 1'b0;
-    readAndWriteSRAM sv(clk, clr, write, read);
+    readAndWriteSRAM sv(DDRclk, clr, write, read);
     
 endmodule
