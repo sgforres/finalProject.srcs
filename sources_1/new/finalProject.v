@@ -448,8 +448,58 @@ module outputModule(
     );
 endmodule
 
-module finalProject(
-
+module saveToSRAM(
+    input clk,
+    input clr,
+    input go
     );
+    // https://reference.digilentinc.com/nexys4-ddr:sram
+    reg writeEnable = 1'b1;
+    reg readEnable = 1'b1;
+    reg [26:0] address = 27'b1;
+    reg [15:0] writeOut = 16'b1;
+    reg cen = 1'b1;
+    reg lb = 1'b0;
+    reg ub = 1'b0;
+    ram2ddrxadc r2(.clk_200MHz_i(clk), .rst_i(clr), .ram_oen(writeEnable), .ram_lb(lb), .ram_ub(ub), .ram_cen(cen), .ram_wen(readEnable), .ram_a(address), .ram_dq_i(writeOut));
+    
+    always @(posedge clk) begin
+        if (go) begin
+            readEnable = 1'b0;
+            cen = 1'b0;
+        end
+    end
+endmodule
 
+/*module readFromSRAM(
+    input clk,
+    input clr,
+    input go,
+    output reg [15:0] readOut
+    );
+    // https://reference.digilentinc.com/nexys4-ddr:sram
+    reg writeEnable = 1'b1;
+    reg [26:0] address = 27'b1;
+    wire [15:0] readTenp;
+    reg cen = 1'b1;
+    reg readEnable = 1'b1;
+    ram2ddrxadc r2(.clk_200MHz_i(clk), .rst_i(clr), .ram_oen(writeEnable), .ram_cen(cen), .ram_wen(readEnable), .ram_a(address), .ram_dq_o(readTenp));
+    
+    always @(posedge clk) begin
+        readOut = readTenp;
+        if (go) begin
+            writeEnable = 1'b0;
+            cen = 1'b0;
+        end
+    end
+endmodule*/
+
+module finalProject(
+    input clk,
+    input clr
+    );
+    reg go = 1'b1;
+    saveToSRAM sv(clk, clr, go);
+    //readFromSRAM read(clk, clr, 1'b1, readOut);
+    
 endmodule
