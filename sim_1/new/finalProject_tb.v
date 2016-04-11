@@ -30,8 +30,7 @@ module finalProject_tb;
     
     encrypt test(clr,clk,din,dinKey,di_vld,dout);
     decrypt test2(clr,clk,din2,dinKey,di_vld,dout2);
-    saveToSRAM sv(clk, clr2, writeEnable);
-    readFromSRAM read(clk, clr2, readEnable, dout4);
+    readAndWriteSRAM sv(clk, clr2, writeEnable, readEnable, dout4);
     
     initial begin
       clr = 1'b 0;

@@ -448,10 +448,12 @@ module outputModule(
     );
 endmodule
 
-module saveToSRAM(
+module readAndWriteSRAM(
     input clk,
     input clr,
-    input go
+    input write,
+    input read,
+    output reg [15:0] readOut
     );
     // https://reference.digilentinc.com/nexys4-ddr:sram
     reg writeEnable = 1'b1;
@@ -461,45 +463,31 @@ module saveToSRAM(
     reg cen = 1'b1;
     reg lb = 1'b0;
     reg ub = 1'b0;
-    ram2ddrxadc r2(.clk_200MHz_i(clk), .rst_i(clr), .ram_oen(writeEnable), .ram_lb(lb), .ram_ub(ub), .ram_cen(cen), .ram_wen(readEnable), .ram_a(address), .ram_dq_i(writeOut));
-    
-    always @(posedge clk) begin
-        if (go) begin
-            readEnable = 1'b0;
-            cen = 1'b0;
-        end
-    end
-endmodule
-
-/*module readFromSRAM(
-    input clk,
-    input clr,
-    input go,
-    output reg [15:0] readOut
-    );
-    // https://reference.digilentinc.com/nexys4-ddr:sram
-    reg writeEnable = 1'b1;
-    reg [26:0] address = 27'b1;
     wire [15:0] readTenp;
-    reg cen = 1'b1;
-    reg readEnable = 1'b1;
-    ram2ddrxadc r2(.clk_200MHz_i(clk), .rst_i(clr), .ram_oen(writeEnable), .ram_cen(cen), .ram_wen(readEnable), .ram_a(address), .ram_dq_o(readTenp));
+    
+    ram2ddrxadc r2(.clk_200MHz_i(clk), .rst_i(clr), .ram_oen(writeEnable), .ram_lb(lb), .ram_ub(ub), .ram_cen(cen), .ram_wen(readEnable), .ram_a(address), .ram_dq_i(writeOut), .ram_dq_o(readTenp));
     
     always @(posedge clk) begin
         readOut = readTenp;
-        if (go) begin
+        if (read) begin
             writeEnable = 1'b0;
             cen = 1'b0;
+            readEnable = 1'b1;
+        end
+        if (write) begin
+            readEnable = 1'b0;
+            cen = 1'b0;
+            writeEnable = 1'b1;
         end
     end
-endmodule*/
+endmodule
 
 module finalProject(
     input clk,
     input clr
     );
-    reg go = 1'b1;
-    saveToSRAM sv(clk, clr, go);
-    //readFromSRAM read(clk, clr, 1'b1, readOut);
+    reg write = 1'b1;
+    reg read = 1'b0;
+    readAndWriteSRAM sv(clk, clr, write, read);
     
 endmodule
