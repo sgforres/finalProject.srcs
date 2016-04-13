@@ -457,10 +457,19 @@ module outputModule(
     // NOTE: My display requires this to be 1280X1080@60Hz
     reg [11:0] counterHorizontal = 12'b0;
     reg [11:0] counterVertical = 12'b0;
+    reg [11:0] characterIndex = 12'b0;
     parameter horizontalLine = 1600;
     parameter verticalLine = 1100;
     parameter usableAreaH = 1280;
     parameter usableAreaV = 1024;
+    
+    reg isOn;
+    
+    reg [39:0] characterMap[0:2] = {
+        {40'b0000000000111101001010010100101001011110},         // Draw a 0
+        {40'b0000000000100001000010000100001000010000},      // Draw a 1
+        {40'b0000000000111100001011110100001000011110}      // Draw a 2
+    };
     
     //https://learn.digilentinc.com/Documents/269
     always @(posedge clk or posedge clr)
@@ -475,10 +484,18 @@ module outputModule(
         else  begin
             if (counterHorizontal < horizontalLine - 1) begin
                     //THIS IS WHERE WE DO ALL OF THE COLOR WORK
-                    if (counterHorizontal > 160 && counterHorizontal <1120 && counterVertical > 35 && counterVertical < 1000) begin
-                        VGA_R = 4'b1000;
-                        VGA_G = 4'b1000;
-                        VGA_B = 4'b1000;
+                    isOn = 1'b0;
+                    if (counterHorizontal > 159 && counterHorizontal < 1120 && counterVertical > 47 && counterVertical < 1000) begin
+                        isOn = characterMap[1][(counterHorizontal%10)/2 + 5*((counterVertical%16)/2)];
+                        if (isOn) begin
+                            VGA_R = 4'b1000;
+                            VGA_G = 4'b1000;
+                            VGA_B = 4'b1000;
+                        end else begin
+                            VGA_R = 4'b1111;
+                            VGA_G = 4'b1111;
+                            VGA_B = 4'b1111;
+                        end 
                     end else begin
                         VGA_R = 4'b0000;
                         VGA_G = 4'b0000;
