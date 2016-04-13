@@ -443,52 +443,146 @@ module inputModule(
     );
 endmodule
 
-module outputModule(
 
+module outputModule(
+    input clk,
+    input clr,
+    output reg [3:0] VGA_R,
+    output reg [3:0] VGA_G,
+    output reg [3:0] VGA_B,
+    output VGA_HS,
+    output VGA_VS
     );
+    
+    // NOTE: My display requires this to be 1280X1080@60Hz
+    reg [11:0] counterHorizontal = 12'b0;
+    reg [11:0] counterVertical = 12'b0;
+    parameter horizontalLine = 1600;
+    parameter verticalLine = 1100;
+    parameter usableAreaH = 1280;
+    parameter usableAreaV = 1024;
+    
+    //https://learn.digilentinc.com/Documents/269
+    always @(posedge clk or posedge clr)
+    begin
+        if (clr == 1'b1) begin
+            counterHorizontal = 0;
+            counterVertical = 0;
+            VGA_R = 4'b0000;
+            VGA_G = 4'b0000;
+            VGA_B = 4'b0000;  
+        end
+        else  begin
+            if (counterHorizontal < horizontalLine - 1) begin
+                    //THIS IS WHERE WE DO ALL OF THE COLOR WORK
+                    if (counterHorizontal > 160 && counterHorizontal <1120 && counterVertical > 35 && counterVertical < 1000) begin
+                        VGA_R = 4'b1000;
+                        VGA_G = 4'b1000;
+                        VGA_B = 4'b1000;
+                    end else begin
+                        VGA_R = 4'b0000;
+                        VGA_G = 4'b0000;
+                        VGA_B = 4'b0000;   
+                    end
+                    counterHorizontal = counterHorizontal + 1;
+                end
+            else begin
+                // Restart for the next lap
+                counterHorizontal = 0;
+                if (counterVertical < verticalLine - 1) begin
+                    counterVertical = counterVertical + 1;
+                end
+                else begin
+                    counterVertical = 0;
+                end
+            end
+        end
+    end
+    assign VGA_HS = (counterHorizontal < usableAreaH) ? 0:1;
+    assign VGA_VS = (counterVertical < usableAreaV) ? 0:1;
 endmodule
 
 module readAndWriteSRAM(
     input clk,
     input clr,
-    input write,
-    input read,
+    input shouldWrite,
+    input shouldRead,
     output reg [15:0] readOut
     );
     // https://reference.digilentinc.com/nexys4-ddr:sram
-    reg writeEnable = 1'b1;
+    /*reg writeEnable = 1'b1;
     reg readEnable = 1'b1;
+    // For now just pick address 1
     reg [26:0] address = 27'b1;
-    reg [15:0] writeOut = 16'b1;
+    //Write out random data
+    reg [15:0] writeOut = 16'b1011101110111011;
     reg cen = 1'b1;
-    reg lb = 1'b0;
+    reg lb = 1'b1;
     reg ub = 1'b0;
-    wire [15:0] readTenp;
+    wire [15:0] readTemp;
+    // Super simple counter
+    integer readCounter = 0;
+    integer writeCounter = 0;
     
-    ram2ddrxadc r2(.clk_200MHz_i(clk), .rst_i(clr), .ram_oen(writeEnable), .ram_lb(lb), .ram_ub(ub), .ram_cen(cen), .ram_wen(readEnable), .ram_a(address), .ram_dq_i(writeOut), .ram_dq_o(readTenp));
-    
+    ram2ddrxadc r2(.ram_oen(writeEnable), .ram_lb(lb), .ram_ub(ub), .ram_cen(cen), .ram_wen(readEnable), .ram_a(address), .ram_dq_i(writeOut), .ram_dq_o(readTemp));
     always @(posedge clk) begin
-        readOut = readTenp;
-        if (read) begin
-            writeEnable = 1'b0;
-            cen = 1'b0;
-            readEnable = 1'b1;
+        if (shouldRead === 1'b1) begin
+            // Need to wait at least 210ns
+            if (readCounter == 200) begin
+                readOut[0] = readTemp[0];
+                writeEnable = 1'b1;
+                readEnable = 1'b1;
+                cen = 1'b1;
+            end
+            else begin
+                writeEnable = 1'b0;
+                cen = 1'b0;
+                readEnable = 1'b1;
+                readCounter = readCounter + 1;
+            end
         end
-        if (write) begin
-            readEnable = 1'b0;
-            cen = 1'b0;
-            writeEnable = 1'b1;
+        if (shouldWrite === 1'b1) begin
+            if (writeCounter == 200) begin
+                readEnable = 1'b1;
+                cen = 1'b1;
+                writeEnable = 1'b1;
+            end
+            else begin
+                readEnable = 1'b0;
+                cen = 1'b0;
+                writeEnable = 1'b1;
+                writeCounter = writeCounter + 1;
+            end
         end
-    end
+    end*/
 endmodule
 
 module finalProject(
-    input DDRclk,
     input clk,
-    input clr
+    input clr,
+    output [15:0] out,
+    output [3:0] VGA_R,
+    output [3:0] VGA_G,
+    output [3:0] VGA_B,
+    output VGA_HS,
+    output VGA_VS
     );
-    reg write = 1'b1;
-    reg read = 1'b0;
-    readAndWriteSRAM sv(DDRclk, clr, write, read);
+    /*reg shouldWrite = 1'b1;
+    reg shouldRead = 1'b0;
     
+    //Super simple counter
+    integer i = 0;
+    readAndWriteSRAM sv(clk, clr, shouldWrite, shouldRead, out);
+    
+    always @(posedge clk) begin
+        //Count up
+        i = i + 1;
+        if (i == 100000000) begin
+            shouldRead = 1'b1;
+            shouldWrite = 1'b0;
+    */
+
+
+    outputModule om(clk, clr, VGA_R, VGA_G, VGA_B, VGA_HS, VGA_VS);
+
 endmodule
