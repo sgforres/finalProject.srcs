@@ -541,7 +541,7 @@ module readAndWriteSRAM(
     integer readCounter = 0;
     integer writeCounter = 0;
     
-    ram2ddrxadc r2(.ram_oen(writeEnable), .ram_lb(lb), .ram_ub(ub), .ram_cen(cen), .ram_wen(readEnable), .ram_a(address), .ram_dq_i(writeOut), .ram_dq_o(readTemp));
+    //ram2ddrxadc r2(.ram_oen(writeEnable), .ram_lb(lb), .ram_ub(ub), .ram_cen(cen), .ram_wen(readEnable), .ram_a(address), .ram_dq_i(writeOut), .ram_dq_o(readTemp));
     always @(posedge clk) begin
         if (shouldRead === 1'b1) begin
             // Need to wait at least 210ns
