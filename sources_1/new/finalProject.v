@@ -465,13 +465,34 @@ module outputModule(
     
     reg isOn;
     
-    reg [39:0] characterMap[0:2] = {
-        {40'b0000000000111101001010010100101001011110},         // Draw a 0
-        {40'b0000000000100001000010000100001000010000},      // Draw a 1
-        {40'b0000000000111100001011110100001000011110}      // Draw a 2
+    /**
+    This is how I draw to the screen
+    It tells which bits to turn on
+    Note: This is "backwards" since 0 is actually the last character
+    */
+    reg [39:0] characterMap[0:15] = {
+        {40'b0000011110100101001010010100101001011110},         // Draw a 0
+        {40'b0000010000100001000010000100001000010000},         // Draw a 1
+        {40'b0000011110000100001011110100001000011110},         // Draw a 2
+        {40'b0000011110100001000011110100001000011110},         // Draw a 3
+        {40'b0000010000100001000011110100101001010010},         // Draw a 4
+        {40'b0000011110100001000011110000100001011110},         // Draw a 5
+        {40'b0000011110100101001011110000100001011110},         // Draw a 6
+        {40'b0000010000100001000010000100001000011110},         // Draw a 7
+        {40'b0000011110100101001011110100101001011110},         // Draw a 8
+        {40'b0000010000100001000011110100101001011110},         // Draw a 9
+        {40'b0000010010100101001011110100101001011110},         // Draw a A
+        {40'b0000011110100101001011110100101001001110},         // Draw a B
+        {40'b0000011110000100001000010000100001011110},         // Draw a C
+        {40'b0000011110100101001010010100101001001110},         // Draw a D
+        {40'b0000011110000100001011110000100001011110},         // Draw a E
+        {40'b0000000010000100001011110000100001011110}          // Draw a F
     };
     
-    //https://learn.digilentinc.com/Documents/269
+    // https://learn.digilentinc.com/Documents/269
+    assign VGA_HS = (counterHorizontal < usableAreaH) ? 0 : 1;
+    assign VGA_VS = (counterVertical < usableAreaV) ? 0 : 1;
+    
     always @(posedge clk or posedge clr)
     begin
         if (clr == 1'b1) begin
@@ -486,7 +507,7 @@ module outputModule(
                     //THIS IS WHERE WE DO ALL OF THE COLOR WORK
                     isOn = 1'b0;
                     if (counterHorizontal > 159 && counterHorizontal < 1120 && counterVertical > 47 && counterVertical < 1000) begin
-                        isOn = characterMap[1][(counterHorizontal%10)/2 + 5*((counterVertical%16)/2)];
+                        isOn = characterMap[6][(counterHorizontal%10)/2 + 5*((counterVertical%16)/2)];
                         if (isOn) begin
                             VGA_R = 4'b1000;
                             VGA_G = 4'b1000;
@@ -515,8 +536,6 @@ module outputModule(
             end
         end
     end
-    assign VGA_HS = (counterHorizontal < usableAreaH) ? 0:1;
-    assign VGA_VS = (counterVertical < usableAreaV) ? 0:1;
 endmodule
 
 module readAndWriteSRAM(
@@ -598,8 +617,9 @@ module finalProject(
             shouldRead = 1'b1;
             shouldWrite = 1'b0;
     */
-
-
+    //Input module
+    //Encrypt
+    //Decrypt
     outputModule om(clk, clr, VGA_R, VGA_G, VGA_B, VGA_HS, VGA_VS);
 
 endmodule
