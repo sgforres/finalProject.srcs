@@ -451,7 +451,8 @@ module outputModule(
     output reg [3:0] VGA_G,
     output reg [3:0] VGA_B,
     output VGA_HS,
-    output VGA_VS
+    output VGA_VS,
+    input [63:0] lineOne
     );
     
     // NOTE: My display requires this to be 1280X1080@60Hz
@@ -464,13 +465,14 @@ module outputModule(
     parameter usableAreaV = 1024;
     
     reg isOn;
+    reg [3:0] currentChar;
     
     /**
     This is how I draw to the screen
     It tells which bits to turn on
     Note: This is "backwards" since 0 is actually the last character
     */
-    reg [39:0] characterMap[0:15] = {
+    parameter [39:0] characterMap[0:15] = {
         {40'b0000011110100101001010010100101001011110},         // Draw a 0
         {40'b0000010000100001000010000100001000010000},         // Draw a 1
         {40'b0000011110000100001011110100001000011110},         // Draw a 2
@@ -504,14 +506,21 @@ module outputModule(
         end
         else  begin
             if (counterHorizontal < horizontalLine - 1) begin
-                    //THIS IS WHERE WE DO ALL OF THE COLOR WORK
+                    // THIS IS WHERE WE DO ALL OF THE COLOR WORK
                     isOn = 1'b0;
                     if (counterHorizontal > 159 && counterHorizontal < 1120 && counterVertical > 47 && counterVertical < 1000) begin
-                        isOn = characterMap[6][(counterHorizontal%10)/2 + 5*((counterVertical%16)/2)];
-                        if (isOn) begin
-                            VGA_R = 4'b1000;
-                            VGA_G = 4'b1000;
-                            VGA_B = 4'b1000;
+                        //Make sure we only show the first 64 bits
+                        if (counterHorizontal - 160 < 160) begin
+                            isOn = characterMap[currentChar[3:0]][(counterHorizontal%10)/2 + 5*((counterVertical%16)/2)];
+                            if (isOn) begin
+                                VGA_R = 4'b1000;
+                                VGA_G = 4'b1000;
+                                VGA_B = 4'b1000;
+                            end else begin
+                                VGA_R = 4'b1111;
+                                VGA_G = 4'b1111;
+                                VGA_B = 4'b1111;             
+                            end
                         end else begin
                             VGA_R = 4'b1111;
                             VGA_G = 4'b1111;
@@ -620,6 +629,6 @@ module finalProject(
     //Input module
     //Encrypt
     //Decrypt
-    outputModule om(clk, clr, VGA_R, VGA_G, VGA_B, VGA_HS, VGA_VS);
+    outputModule om(clk, clr, VGA_R, VGA_G, VGA_B, VGA_HS, VGA_VS, 64'b0000000100000001000000010000000100000001000000010000000100000001);
 
 endmodule

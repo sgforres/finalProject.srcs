@@ -28,9 +28,16 @@ module finalProject_tb;
     reg readEnable;
     reg writeEnable;
     
+    wire [15:0] out;
+    wire [3:0] red;
+    wire [3:0] green;
+    wire [3:0] blue;
+    wire Vsync;
+    wire Hsync;
+    
     encrypt test(clr,clk,din,dinKey,di_vld,dout);
     decrypt test2(clr,clk,din2,dinKey,di_vld,dout2);
-    readAndWriteSRAM sv(clk, clr2, writeEnable, readEnable, dout4);
+    finalProject fp(clk, clr2, out, red, green, blue, Hsync,Vsync);
     
     initial begin
       clr = 1'b 0;
