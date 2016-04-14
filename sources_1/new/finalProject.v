@@ -511,6 +511,7 @@ module outputModule(
                     if (counterHorizontal > 159 && counterHorizontal < 1120 && counterVertical > 47 && counterVertical < 1000) begin
                         //Make sure we only show the first 64 bits
                         if (counterHorizontal - 160 < 160) begin
+                            currentChar = lineOne[(counterHorizontal - 160)/10*4 + 3 -: 4];
                             isOn = characterMap[currentChar[3:0]][(counterHorizontal%10)/2 + 5*((counterVertical%16)/2)];
                             if (isOn) begin
                                 VGA_R = 4'b1000;
