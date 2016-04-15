@@ -20,7 +20,6 @@ module finalProject_tb;
     reg [127:0] dinKey;
     wire [63:0] dout;
     wire [63:0] dout2;
-    wire [15:0] dout4;
     reg clr;
     reg clr2;
     reg clk;
@@ -28,7 +27,6 @@ module finalProject_tb;
     reg readEnable;
     reg writeEnable;
     
-    wire [15:0] out;
     wire [3:0] red;
     wire [3:0] green;
     wire [3:0] blue;
@@ -37,7 +35,7 @@ module finalProject_tb;
     
     encrypt test(clr,clk,din,dinKey,di_vld,dout);
     decrypt test2(clr,clk,din2,dinKey,di_vld,dout2);
-    finalProject fp(clk, clr2, out, red, green, blue, Hsync,Vsync);
+    finalProject fp(clk, clr2, red, green, blue, Hsync,Vsync);
     
     initial begin
       clr = 1'b 0;

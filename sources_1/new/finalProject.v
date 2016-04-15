@@ -126,7 +126,7 @@ module encrypt(
             // Loop here for a while
             i_cnt = i_cnt + 1;
             // After we have finished the 12 rounds we move onto ST_READY
-            if (i_cnt == 4'b1101) begin
+            if (i_cnt === 4'b1101) begin
                 CURRENT_STATE = 3'b100;
             end
         end 
@@ -443,7 +443,9 @@ module inputModule(
     );
 endmodule
 
-
+/**
+This is the output module to the VGA display
+*/
 module outputModule(
     input clk,
     input clr,
@@ -452,7 +454,12 @@ module outputModule(
     output reg [3:0] VGA_B,
     output VGA_HS,
     output VGA_VS,
-    input [63:0] lineOne
+    // These are the characters that should be displayed per line
+    input [63:0] lineOne,
+    input [63:0] lineTwo,
+    input [63:0] lineThree,
+    input [63:0] lineFour,
+    input [63:0] lineFive
     );
     
     // NOTE: My display requires this to be 1280X1080@60Hz
@@ -511,8 +518,32 @@ module outputModule(
                     if (counterHorizontal > 159 && counterHorizontal < 1120 && counterVertical > 47 && counterVertical < 1000) begin
                         //Make sure we only show the first 64 bits
                         if (counterHorizontal - 160 < 160) begin
-                            currentChar = lineOne[(counterHorizontal - 160)/10*4 + 3 -: 4];
-                            isOn = characterMap[currentChar[3:0]][(counterHorizontal%10)/2 + 5*((counterVertical%16)/2)];
+                        
+                            if (counterVertical - 48 < 16) begin
+                                currentChar = lineOne[66-((counterHorizontal - 160)/10*4 + 3) -: 4];
+                                isOn = characterMap[currentChar[3:0]][(counterHorizontal%10)/2 + 5*((counterVertical%16)/2)];
+                            end
+                            
+                            if (counterVertical - 48 > 31 && counterVertical - 48 < 48) begin
+                                currentChar = lineTwo[66-((counterHorizontal - 160)/10*4 + 3) -: 4];
+                                isOn = characterMap[currentChar[3:0]][(counterHorizontal%10)/2 + 5*((counterVertical%16)/2)];
+                            end
+                            
+                            if (counterVertical - 48 > 63 && counterVertical - 48 < 80) begin
+                                currentChar = lineThree[66-((counterHorizontal - 160)/10*4 + 3) -: 4];
+                                isOn = characterMap[currentChar[3:0]][(counterHorizontal%10)/2 + 5*((counterVertical%16)/2)];
+                            end
+                            
+                            if (counterVertical - 48 > 95 && counterVertical - 48 < 112) begin
+                                currentChar = lineFour[66-((counterHorizontal - 160)/10*4 + 3) -: 4];
+                                isOn = characterMap[currentChar[3:0]][(counterHorizontal%10)/2 + 5*((counterVertical%16)/2)];
+                            end
+                            
+                            if (counterVertical - 48 > 127 && counterVertical - 48 < 144) begin
+                                currentChar = lineFive[66-((counterHorizontal - 160)/10*4 + 3) -: 4];
+                                isOn = characterMap[currentChar[3:0]][(counterHorizontal%10)/2 + 5*((counterVertical%16)/2)];
+                            end
+                            
                             if (isOn) begin
                                 VGA_R = 4'b1000;
                                 VGA_G = 4'b1000;
@@ -548,88 +579,26 @@ module outputModule(
     end
 endmodule
 
-module readAndWriteSRAM(
-    input clk,
-    input clr,
-    input shouldWrite,
-    input shouldRead,
-    output reg [15:0] readOut
-    );
-    // https://reference.digilentinc.com/nexys4-ddr:sram
-    /*reg writeEnable = 1'b1;
-    reg readEnable = 1'b1;
-    // For now just pick address 1
-    reg [26:0] address = 27'b1;
-    //Write out random data
-    reg [15:0] writeOut = 16'b1011101110111011;
-    reg cen = 1'b1;
-    reg lb = 1'b1;
-    reg ub = 1'b0;
-    wire [15:0] readTemp;
-    // Super simple counter
-    integer readCounter = 0;
-    integer writeCounter = 0;
-    
-    //ram2ddrxadc r2(.ram_oen(writeEnable), .ram_lb(lb), .ram_ub(ub), .ram_cen(cen), .ram_wen(readEnable), .ram_a(address), .ram_dq_i(writeOut), .ram_dq_o(readTemp));
-    always @(posedge clk) begin
-        if (shouldRead === 1'b1) begin
-            // Need to wait at least 210ns
-            if (readCounter == 200) begin
-                readOut[0] = readTemp[0];
-                writeEnable = 1'b1;
-                readEnable = 1'b1;
-                cen = 1'b1;
-            end
-            else begin
-                writeEnable = 1'b0;
-                cen = 1'b0;
-                readEnable = 1'b1;
-                readCounter = readCounter + 1;
-            end
-        end
-        if (shouldWrite === 1'b1) begin
-            if (writeCounter == 200) begin
-                readEnable = 1'b1;
-                cen = 1'b1;
-                writeEnable = 1'b1;
-            end
-            else begin
-                readEnable = 1'b0;
-                cen = 1'b0;
-                writeEnable = 1'b1;
-                writeCounter = writeCounter + 1;
-            end
-        end
-    end*/
-endmodule
-
 module finalProject(
     input clk,
     input clr,
-    output [15:0] out,
+    input shouldReadValue,
+    input shouldReadKey,
     output [3:0] VGA_R,
     output [3:0] VGA_G,
     output [3:0] VGA_B,
     output VGA_HS,
     output VGA_VS
     );
-    /*reg shouldWrite = 1'b1;
-    reg shouldRead = 1'b0;
-    
-    //Super simple counter
-    integer i = 0;
-    readAndWriteSRAM sv(clk, clr, shouldWrite, shouldRead, out);
-    
-    always @(posedge clk) begin
-        //Count up
-        i = i + 1;
-        if (i == 100000000) begin
-            shouldRead = 1'b1;
-            shouldWrite = 1'b0;
-    */
-    //Input module
-    //Encrypt
-    //Decrypt
-    outputModule om(clk, clr, VGA_R, VGA_G, VGA_B, VGA_HS, VGA_VS, 64'b0000000100000001000000010000000100000001000000010000000100000001);
 
+    // Input module
+    reg[63:0] dinValue = 64'b00000000000000000000000000000000000000000000000000000001;
+    reg[127:0] dinKey = 128'b0000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000001;
+    wire[63:0] encryptOut;
+    wire[63:0] dout; 
+    reg di_vld = 1'b0;
+
+    encrypt e1(clr, clk, dinValue, dinKey, di_vld, encryptOut);
+    decrypt d1(clr, clk, encryptOut, dinKey, di_vld, dout);
+    outputModule om(clk, clr, VGA_R, VGA_G, VGA_B, VGA_HS, VGA_VS, dinValue, dinKey[127:64], dinKey[63:0], encryptOut, dout);
 endmodule
