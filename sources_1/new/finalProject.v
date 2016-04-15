@@ -87,7 +87,7 @@ module encrypt(
     pipelineEncrypt  p12(clk, aOut11, bOut11, skey[24][31:0],skey[25][31:0],dout,aOut12,bOut12,CURRENT_STATE);
     
     // FSM
-    always @(posedge clk) begin
+    always @(posedge clk or posedge clr) begin
         if (clr == 1'b0) begin
             // Move and stay at ST_IDLE
             CURRENT_STATE = 3'b001; 
@@ -448,7 +448,6 @@ This is the output module to the VGA display
 */
 module outputModule(
     input clk,
-    input clr,
     output reg [3:0] VGA_R,
     output reg [3:0] VGA_G,
     output reg [3:0] VGA_B,
@@ -502,17 +501,9 @@ module outputModule(
     assign VGA_HS = (counterHorizontal < usableAreaH) ? 0 : 1;
     assign VGA_VS = (counterVertical < usableAreaV) ? 0 : 1;
     
-    always @(posedge clk or posedge clr)
+    always @(posedge clk)
     begin
-        if (clr == 1'b1) begin
-            counterHorizontal = 0;
-            counterVertical = 0;
-            VGA_R = 4'b0000;
-            VGA_G = 4'b0000;
-            VGA_B = 4'b0000;  
-        end
-        else  begin
-            if (counterHorizontal < horizontalLine - 1) begin
+        if (counterHorizontal < horizontalLine - 1) begin
                     // THIS IS WHERE WE DO ALL OF THE COLOR WORK
                     isOn = 1'b0;
                     if (counterHorizontal > 159 && counterHorizontal < 1120 && counterVertical > 47 && counterVertical < 1000) begin
@@ -576,14 +567,13 @@ module outputModule(
                 end
             end
         end
-    end
 endmodule
 
 module finalProject(
     input clk,
     input clr,
-    input shouldReadValue,
-    input shouldReadKey,
+    input shouldEncrypt,
+    input shouldDecrypt,
     output [3:0] VGA_R,
     output [3:0] VGA_G,
     output [3:0] VGA_B,
@@ -593,12 +583,11 @@ module finalProject(
 
     // Input module
     reg[63:0] dinValue = 64'b00000000000000000000000000000000000000000000000000000001;
-    reg[127:0] dinKey = 128'b0000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000001;
+    reg[127:0] dinKey = 128'b0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001;
     wire[63:0] encryptOut;
     wire[63:0] dout; 
-    reg di_vld = 1'b0;
 
-    encrypt e1(clr, clk, dinValue, dinKey, di_vld, encryptOut);
-    decrypt d1(clr, clk, encryptOut, dinKey, di_vld, dout);
-    outputModule om(clk, clr, VGA_R, VGA_G, VGA_B, VGA_HS, VGA_VS, dinValue, dinKey[127:64], dinKey[63:0], encryptOut, dout);
+    encrypt e1(clr, clk, dinValue, dinKey, shouldEncrypt, encryptOut);
+    decrypt d1(clr, clk, encryptOut, dinKey, shouldDecrypt, dout);
+    outputModule om(clk, VGA_R, VGA_G, VGA_B, VGA_HS, VGA_VS, dinValue, dinKey[127:64], dinKey[63:0], encryptOut, dout);
 endmodule

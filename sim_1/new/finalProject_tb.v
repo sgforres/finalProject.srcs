@@ -43,7 +43,7 @@ module finalProject_tb;
       clk = 1'b 0;
       din = 64'h0;
       din2 = 64'heedba5216d8f4b15;
-      dinKey = 127'h 1;
+      dinKey = 128'h 1;
       di_vld = 1'b0;
       readEnable = 1'b0;
       #100 begin
