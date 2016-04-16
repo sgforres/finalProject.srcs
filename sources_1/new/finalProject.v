@@ -472,7 +472,9 @@ module outputModule(
     parameter usableAreaH = 1280;
     parameter usableAreaV = 1024;
     
-    reg isOn;
+    // Should the pixel be turned on
+    reg isPixelOn;
+    //Local variable for storing what character we are drawing
     reg [3:0] currentChar;
     
     /**
@@ -503,70 +505,68 @@ module outputModule(
     assign VGA_HS = (counterHorizontal < usableAreaH) ? 0 : 1;
     assign VGA_VS = (counterVertical < usableAreaV) ? 0 : 1;
     
-    always @(posedge clk)
-    begin
+    always @(posedge clk) begin
         if (counterHorizontal < horizontalLine - 1) begin
                     // THIS IS WHERE WE DO ALL OF THE COLOR WORK
-                    isOn = 1'b0;
+                    
+                    // Start with the pixel turned "off"
+                    isPixelOn = 1'b0;
+
                     if (counterHorizontal > 159 && counterHorizontal < 1120 && counterVertical > 47 && counterVertical < 1000) begin
-                        //Make sure we only show the first 64 bits
+                        // This is the basic color for the background. This is what color is shown when pixel is "off"
+                        VGA_R = 4'b1111;
+                        VGA_G = 4'b1111;
+                        VGA_B = 4'b1111;
+                        //Make sure we only draw characters for the first 64 bits
                         if (counterHorizontal - 160 < 160) begin
                         
                             // Draw the first line of characters to the screen
                             if (counterVertical - 48 < 16) begin
                                 currentChar = lineOne[66-((counterHorizontal - 160)/10*4 + 3) -: 4];
-                                isOn = characterMap[currentChar[3:0]][(counterHorizontal%10)/2 + 5*((counterVertical%16)/2)];
+                                isPixelOn = characterMap[currentChar[3:0]][(counterHorizontal%10)/2 + 5*((counterVertical%16)/2)];
                             end
                             
                             // Draw the second line of characters to the screen
                             if (counterVertical - 48 > 31 && counterVertical - 48 < 48) begin
                                 currentChar = lineTwo[66-((counterHorizontal - 160)/10*4 + 3) -: 4];
-                                isOn = characterMap[currentChar[3:0]][(counterHorizontal%10)/2 + 5*((counterVertical%16)/2)];
+                                isPixelOn = characterMap[currentChar[3:0]][(counterHorizontal%10)/2 + 5*((counterVertical%16)/2)];
                             end
 
                             // Draw the third line of characters to the screen                            
                             if (counterVertical - 48 > 63 && counterVertical - 48 < 80) begin
                                 currentChar = lineThree[66-((counterHorizontal - 160)/10*4 + 3) -: 4];
-                                isOn = characterMap[currentChar[3:0]][(counterHorizontal%10)/2 + 5*((counterVertical%16)/2)];
+                                isPixelOn = characterMap[currentChar[3:0]][(counterHorizontal%10)/2 + 5*((counterVertical%16)/2)];
                             end
                             
                             // Draw the fourth line of characters to the screen                              
                             if (counterVertical - 48 > 95 && counterVertical - 48 < 112) begin
                                 currentChar = lineFour[66-((counterHorizontal - 160)/10*4 + 3) -: 4];
-                                isOn = characterMap[currentChar[3:0]][(counterHorizontal%10)/2 + 5*((counterVertical%16)/2)];
+                                isPixelOn = characterMap[currentChar[3:0]][(counterHorizontal%10)/2 + 5*((counterVertical%16)/2)];
                             end
                             
                             // Draw the fifth line of characters to the screen  
                             if (counterVertical - 48 > 127 && counterVertical - 48 < 144) begin
                                 currentChar = lineFive[66-((counterHorizontal - 160)/10*4 + 3) -: 4];
-                                isOn = characterMap[currentChar[3:0]][(counterHorizontal%10)/2 + 5*((counterVertical%16)/2)];
+                                isPixelOn = characterMap[currentChar[3:0]][(counterHorizontal%10)/2 + 5*((counterVertical%16)/2)];
                             end
                             
                             // Draw the sixth line of characters to the screen  
                             if (counterVertical - 48 > 159 && counterVertical - 48 < 176) begin
                                 currentChar = lineSix[66-((counterHorizontal - 160)/10*4 + 3) -: 4];
-                                isOn = characterMap[currentChar[3:0]][(counterHorizontal%10)/2 + 5*((counterVertical%16)/2)];
+                                isPixelOn = characterMap[currentChar[3:0]][(counterHorizontal%10)/2 + 5*((counterVertical%16)/2)];
                             end
                             
                             // If the pixel is "on" change the color
-                            if (isOn) begin
+                            if (isPixelOn) begin
                                 VGA_R = 4'b1000;
                                 VGA_G = 4'b1000;
                                 VGA_B = 4'b1000;
-                            end else begin
-                                VGA_R = 4'b1111;
-                                VGA_G = 4'b1111;
-                                VGA_B = 4'b1111;             
                             end
-                        end else begin
-                            VGA_R = 4'b1111;
-                            VGA_G = 4'b1111;
-                            VGA_B = 4'b1111;
-                        end 
+                        end
                     end else begin
                         VGA_R = 4'b0000;
                         VGA_G = 4'b0000;
-                        VGA_B = 4'b0000;   
+                        VGA_B = 4'b0000;
                     end
                     counterHorizontal = counterHorizontal + 1;
                 end
@@ -600,7 +600,7 @@ module finalProject(
     reg[63:0] dinValue = 64'b00000000000000000000000000000000000000000000000000000001;
     reg[127:0] dinKey = 128'b0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001;
     wire[63:0] encryptOut;
-    wire[63:0] dout; 
+    wire[63:0] decryptOut; 
     
     reg writeEnable = 1'b0;
     reg readEnable = 1'b0;
@@ -609,13 +609,18 @@ module finalProject(
 
     encrypt e1(start, clk, dinValue, dinKey, shouldEncrypt, encryptOut);
     fifo_main fifo(clk, reset, encryptOut, writeEnable, readEnable, encryptOutFromFIFO);
-    decrypt d1(start, clk, encryptOutFromFIFO, dinKey, readyToDecrypt, dout);
+    decrypt d1(start, clk, encryptOutFromFIFO, dinKey, readyToDecrypt, decryptOut);
     // Display everything to the screen
-    outputModule om(clk, VGA_R, VGA_G, VGA_B, VGA_HS, VGA_VS, dinValue, dinKey[127:64], dinKey[63:0], encryptOut, encryptOutFromFIFO, dout);
+    // Line 1: Value the user passed in
+    // Line 2: Top 64 bits of the key that the user passed in
+    // Line 3: Bottom 64 bits of the key that the user passed in
+    // Line 4: The output from the encryption
+    // Line 5: The output that is read from FIFO
+    // Line 6: The decrypted value
+    outputModule om(clk, VGA_R, VGA_G, VGA_B, VGA_HS, VGA_VS, dinValue, dinKey[127:64], dinKey[63:0], encryptOut, encryptOutFromFIFO, decryptOut);
     
     integer i = 0;
-    always @(posedge clk)
-    begin
+    always @(posedge clk) begin
         if (encryptOut) begin
             writeEnable = 1'b1;
         end
