@@ -219,6 +219,7 @@ module decrypt(
             
             // Clear all variables
             i_cnt = 4'b1100;
+            dout[63:0] = 64'b0;
             
             for (loopCount=0; loopCount<=25; loopCount = loopCount + 1) begin
                 skey[loopCount][31:0] = keyOut[32*loopCount+31 -: 32];
@@ -571,9 +572,10 @@ endmodule
 
 module finalProject(
     input clk,
-    input clr,
+    input start,
     input shouldEncrypt,
     input shouldDecrypt,
+    input reset,
     output [3:0] VGA_R,
     output [3:0] VGA_G,
     output [3:0] VGA_B,
@@ -586,8 +588,34 @@ module finalProject(
     reg[127:0] dinKey = 128'b0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001;
     wire[63:0] encryptOut;
     wire[63:0] dout; 
+    
+    reg writeEnable = 1'b0;
+    reg readEnable = 1'b0;
+    wire[63:0] encryptOutFromFIFO;
+    reg readyToDecrypt  = 1'b0;
 
-    encrypt e1(clr, clk, dinValue, dinKey, shouldEncrypt, encryptOut);
-    decrypt d1(clr, clk, encryptOut, dinKey, shouldDecrypt, dout);
-    outputModule om(clk, VGA_R, VGA_G, VGA_B, VGA_HS, VGA_VS, dinValue, dinKey[127:64], dinKey[63:0], encryptOut, dout);
+    encrypt e1(start, clk, dinValue, dinKey, shouldEncrypt, encryptOut);
+    fifo_main fifo(clk, reset, encryptOut, writeEnable, readEnable, encryptOutFromFIFO);
+    decrypt d1(start, clk, encryptOutFromFIFO, dinKey, readyToDecrypt, dout);
+    outputModule om(clk, VGA_R, VGA_G, VGA_B, VGA_HS, VGA_VS, dinValue, dinKey[127:64], encryptOut, encryptOutFromFIFO, dout);
+    
+    integer i = 0;
+    always @(posedge clk)
+    begin
+        if (encryptOut) begin
+            writeEnable = 1'b1;
+        end
+        if (shouldDecrypt) begin
+            readEnable = 1'b1;
+            writeEnable = 1'b0;
+            i = i + 1;
+        end
+        if (i === 20) begin
+            readyToDecrypt = 1'b1;
+        end
+        if (reset) begin
+            readEnable = 1'b0;
+            writeEnable = 1'b0;
+        end
+    end
 endmodule

@@ -32,10 +32,13 @@ module finalProject_tb;
     wire [3:0] blue;
     wire Vsync;
     wire Hsync;
+    wire shouldEncrypt;
+    wire shouldDecrypt;
+    wire reset;
     
     encrypt test(clr,clk,din,dinKey,di_vld,dout);
     decrypt test2(clr,clk,din2,dinKey,di_vld,dout2);
-    finalProject fp(clk, clr2, red, green, blue, Hsync,Vsync);
+    finalProject fp(clk, clr2,shouldEncrypt,shouldDecrypt,reset, red, green, blue, Hsync,Vsync);
     
     initial begin
       clr = 1'b 0;
