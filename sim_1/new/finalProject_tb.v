@@ -6,14 +6,11 @@
 
 /**
 This is the test file. It tests the following:
--
+-Encrypt
+-Decrpyt
+-Final Project
 **/
 module finalProject_tb;
-    //******************************//
-    //26 Encryption Keys used the design
-    //The debugging data were generated based on these keys
-    //******************************//
-    
     // Test Encrypt and Decrypt
     reg [63:0] din;
     reg [63:0] din2;
@@ -34,11 +31,16 @@ module finalProject_tb;
     wire Hsync;
     wire shouldEncrypt;
     wire shouldDecrypt;
+    wire selectValue;
+    wire selectKey;
+    wire start;
     wire reset;
+    wire PS2_CLK;
+    wire PS2_DATA;
     
     encrypt test(clr,clk,din,dinKey,di_vld,dout);
     decrypt test2(clr,clk,din2,dinKey,di_vld,dout2);
-    finalProject fp(clk, clr2,shouldEncrypt,shouldDecrypt,reset, red, green, blue, Hsync,Vsync);
+    finalProject fp(clk,selectValue,selectKey, start, shouldEncrypt,shouldDecrypt,PS2_CLK,PS2_DATA, reset, red, green, blue, Hsync,Vsync);
     
     initial begin
       clr = 1'b 0;

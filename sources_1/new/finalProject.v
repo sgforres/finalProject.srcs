@@ -8,8 +8,10 @@ This file contains the following high level modules:
 - Encrypt
 - Decrypt
 - Key Generation
-- Input
 - Output
+- finalProject
+
+The goal of the project is to complete the RC5 encryption and decryption algorith
 */
 
 module encrypt(
@@ -219,7 +221,6 @@ module decrypt(
             
             // Clear all variables
             i_cnt = 4'b1100;
-            dout[63:0] = 64'b0;
             
             for (loopCount=0; loopCount<=25; loopCount = loopCount + 1) begin
                 skey[loopCount][31:0] = keyOut[32*loopCount+31 -: 32];
@@ -313,7 +314,6 @@ module keyGen(
             tempShiftedVal2 = B_intermediate >> (32 - (A + B));
             B = tempShiftedVal | tempShiftedVal2; 
             
-                
             A = S[i];
             B = L [j];
             i = (i + 1) % 26;
@@ -437,38 +437,6 @@ module pipelineDecrypt(
         end
     end
 endmodule
-   
-/**
-Takes in mouse events and generates input for them
-*/
-module inputModule(
-    input clk,
-    input selectValue,              // Determines if we are using the mouse event for value
-    input selectKey,                // Determines if we are using the mouse event for key
-    inout PS2_CLK,
-    inout PS2_DATA,
-    input reset,
-    output reg [63:0] dinValue,
-    output reg [127:0] dinKey
-    );
-    //Position of mouse
-    wire[11:0] xPos;
-    wire[11:0] yPos;
-    
-    // Grab the mouse coordinates
-    MouseCtl MC(.clk(clk), .rst(reset), .ps2_clk(PS2_CLK), .ps2_data(PS2_DATA), .xpos(xPos), .ypos(yPos));
-    
-    always @(posedge clk) begin
-        /*if (reset) begin
-            dinValue[63:0] = 64'b0;
-            dinKey[127:0] = 128'b0;
-        end else */if (selectValue) begin
-            dinValue[63:0] = xPos * yPos;
-        end else if (selectKey) begin
-            dinKey[127:0] = xPos * yPos;
-        end
-    end
-endmodule
 
 /**
 This is the output module to the VGA display
@@ -493,10 +461,10 @@ module outputModule(
     reg [11:0] counterHorizontal = 12'b0;
     reg [11:0] counterVertical = 12'b0;
     reg [11:0] characterIndex = 12'b0;
-    parameter horizontalLine = 1600;
-    parameter verticalLine = 1100;
-    parameter usableAreaH = 1280;
-    parameter usableAreaV = 1024;
+    integer horizontalLine = 1600;
+    integer verticalLine = 1100;
+    integer usableAreaH = 1280;
+    integer usableAreaV = 1024;
     
     // Should the pixel be turned on
     reg isPixelOn;
@@ -626,21 +594,26 @@ module finalProject(
     output VGA_VS
     );
 
-    reg[63:0] dinValue = 64'b0;
-    reg[127:0] dinKey = 128'b0;
-    wire[63:0] encryptOut;
-    wire[63:0] decryptOut; 
+    reg[63:0] dinValue = 64'b0;     // The users inputed value         
+    reg[127:0] dinKey = 128'b0;     // The users inputed key
+    wire[63:0] encryptOut;          // The value returned from the encryption
+    wire[63:0] encryptOutFromFIFO;  // The value read out from the FIFO
+    wire[63:0] decryptOut;          // The value after decryption
     
-    reg writeEnable = 1'b0;
-    reg readEnable = 1'b0;
-    wire[63:0] encryptOutFromFIFO;
-    reg readyToDecrypt  = 1'b0;
+    reg writeEnable = 1'b0;         // If we should write to FIFO
+    reg readEnable = 1'b0;          // If we should read from FIFO
+    reg readyToDecrypt  = 1'b0;     // Need to ensure that we have the value from FIFO before trying to decrypt
     
-    //Position of mouse
+    
+    // INPUT MODULE ------------------------------------------------
+    // Struggled to abstract this to a different module. The dinKey, dinValue where never set properly
+    
+    // Position of mouse
     wire[11:0] xPos;
     wire[11:0] yPos;
     
     // Grab the mouse coordinates
+    // https://reference.digilentinc.com/nexys4-ddr:userdemo
     MouseCtl MC(.clk(clk), .rst(reset), .ps2_clk(PS2_CLK), .ps2_data(PS2_DATA), .xpos(xPos), .ypos(yPos));
     
     always @(posedge clk) begin
@@ -654,6 +627,9 @@ module finalProject(
         end
     end
     
+    // END INPUT MODULE ------------------------------------------------
+    
+    
     encrypt e1(start, clk, dinValue, dinKey, shouldEncrypt, encryptOut);
     fifo_main fifo(clk, reset, encryptOut, writeEnable, readEnable, encryptOutFromFIFO);
     decrypt d1(start, clk, encryptOutFromFIFO, dinKey, readyToDecrypt, decryptOut);
@@ -666,17 +642,19 @@ module finalProject(
     // Line 6: The decrypted value
     outputModule om(clk, VGA_R, VGA_G, VGA_B, VGA_HS, VGA_VS, dinValue, dinKey[127:64], dinKey[63:0], encryptOut, encryptOutFromFIFO, decryptOut);
     
-    integer readCounter = 0;
+    integer readCounter = 0;                // Determine when it is safe to read the value from FIFO
     always @(posedge clk) begin
-        if (encryptOut) begin
+        if (shouldEncrypt && encryptOut) begin
             writeEnable = 1'b1;
+            readEnable = 1'b0;
+            readCounter = 0;
         end
         if (shouldDecrypt) begin
             readEnable = 1'b1;
             writeEnable = 1'b0;
             readCounter = readCounter + 1;
         end
-        // It will be then save to use the value in encryptOutFromFIFO to decrypt
+        // It will be safe to use the value in encryptOutFromFIFO to decrypt
         if (readCounter === 20) begin
             readyToDecrypt = 1'b1;
         end
