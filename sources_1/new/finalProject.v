@@ -438,10 +438,36 @@ module pipelineDecrypt(
     end
 endmodule
    
-
+/**
+Takes in mouse events and generates input for them
+*/
 module inputModule(
-
+    input clk,
+    input selectValue,              // Determines if we are using the mouse event for value
+    input selectKey,                // Determines if we are using the mouse event for key
+    inout PS2_CLK,
+    inout PS2_DATA,
+    input reset,
+    output reg [63:0] dinValue,
+    output reg [127:0] dinKey
     );
+    //Position of mouse
+    wire[11:0] xPos;
+    wire[11:0] yPos;
+    
+    // Grab the mouse coordinates
+    MouseCtl MC(.clk(clk), .rst(reset), .ps2_clk(PS2_CLK), .ps2_data(PS2_DATA), .xpos(xPos), .ypos(yPos));
+    
+    always @(posedge clk) begin
+        /*if (reset) begin
+            dinValue[63:0] = 64'b0;
+            dinKey[127:0] = 128'b0;
+        end else */if (selectValue) begin
+            dinValue[63:0] = xPos * yPos;
+        end else if (selectKey) begin
+            dinKey[127:0] = xPos * yPos;
+        end
+    end
 endmodule
 
 /**
@@ -584,8 +610,9 @@ module outputModule(
 endmodule
 
 module finalProject(
-    input clk,
-    input selectValue,            // Determines if we are using the mouse event for value or key
+    input clk,                      // 40 ns clock. Easiest to use with VGA display
+    input selectValue,              // Determines if we are using the mouse event for value
+    input selectKey,                // Determines if we are using the mouse event for value
     input start,
     input shouldEncrypt,
     input shouldDecrypt,
@@ -599,9 +626,8 @@ module finalProject(
     output VGA_VS
     );
 
-    // Input module
-    reg[63:0] dinValue = 64'b00000000000000000000000000000000000000000000000000000000;
-    reg[127:0] dinKey = 128'b0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001;
+    reg[63:0] dinValue = 64'b0;
+    reg[127:0] dinKey = 128'b0;
     wire[63:0] encryptOut;
     wire[63:0] decryptOut; 
     
@@ -610,20 +636,24 @@ module finalProject(
     wire[63:0] encryptOutFromFIFO;
     reg readyToDecrypt  = 1'b0;
     
+    //Position of mouse
     wire[11:0] xPos;
     wire[11:0] yPos;
     
+    // Grab the mouse coordinates
     MouseCtl MC(.clk(clk), .rst(reset), .ps2_clk(PS2_CLK), .ps2_data(PS2_DATA), .xpos(xPos), .ypos(yPos));
     
     always @(posedge clk) begin
-        if (selectValue) begin
+        if (reset) begin
+            dinValue[63:0] = 64'b0;
+            dinKey[127:0] = 128'b0;
+        end else if (selectValue) begin
             dinValue[63:0] = xPos * yPos;
-        end else begin
+        end else if (selectKey) begin
             dinKey[127:0] = xPos * yPos;
         end
     end
-    outputModule om(clk, VGA_R, VGA_G, VGA_B, VGA_HS, VGA_VS, dinValue, dinKey[127:64], dinKey[63:0], encryptOut, encryptOutFromFIFO, decryptOut);
-/*
+    
     encrypt e1(start, clk, dinValue, dinKey, shouldEncrypt, encryptOut);
     fifo_main fifo(clk, reset, encryptOut, writeEnable, readEnable, encryptOutFromFIFO);
     decrypt d1(start, clk, encryptOutFromFIFO, dinKey, readyToDecrypt, decryptOut);
@@ -640,7 +670,6 @@ module finalProject(
     always @(posedge clk) begin
         if (encryptOut) begin
             writeEnable = 1'b1;
-            readCounter = 0;
         end
         if (shouldDecrypt) begin
             readEnable = 1'b1;
@@ -656,5 +685,5 @@ module finalProject(
             readEnable = 1'b0;
             writeEnable = 1'b0;
         end
-    end*/
+    end
 endmodule
