@@ -9,10 +9,10 @@ create_clock -period 40.000 -name clk -waveform {0.000 20.000} -add [get_ports c
 
 ##Switches
 
-set_property -dict {PACKAGE_PIN J15 IOSTANDARD LVCMOS33} [get_ports start]
-set_property -dict { PACKAGE_PIN L16   IOSTANDARD LVCMOS33 } [get_ports { shouldEncrypt }]; #IO_L3N_T0_DQS_EMCCLK_14 Sch=sw[1]
-set_property -dict { PACKAGE_PIN M13   IOSTANDARD LVCMOS33 } [get_ports { shouldDecrypt }]; #IO_L6N_T0_D08_VREF_14 Sch=sw[2]
-#set_property -dict { PACKAGE_PIN R15   IOSTANDARD LVCMOS33 } [get_ports { swt[3] }]; #IO_L13N_T2_MRCC_14 Sch=sw[3]
+set_property -dict {PACKAGE_PIN J15 IOSTANDARD LVCMOS33} [get_ports selectValue]
+set_property -dict { PACKAGE_PIN L16   IOSTANDARD LVCMOS33 } [get_ports { start }]; #IO_L3N_T0_DQS_EMCCLK_14 Sch=sw[1]
+set_property -dict { PACKAGE_PIN M13   IOSTANDARD LVCMOS33 } [get_ports { shouldEncrypt }]; #IO_L6N_T0_D08_VREF_14 Sch=sw[2]
+set_property -dict { PACKAGE_PIN R15   IOSTANDARD LVCMOS33 } [get_ports { shouldDecrypt }]; #IO_L13N_T2_MRCC_14 Sch=sw[3]
 #set_property -dict { PACKAGE_PIN R17   IOSTANDARD LVCMOS33 } [get_ports { swt[4] }]; #IO_L12N_T1_MRCC_14 Sch=sw[4]
 #set_property -dict { PACKAGE_PIN T18   IOSTANDARD LVCMOS33 } [get_ports { swt[5] }]; #IO_L7N_T1_D10_14 Sch=sw[5]
 #set_property -dict { PACKAGE_PIN U18   IOSTANDARD LVCMOS33 } [get_ports { swt[6] }]; #IO_L17N_T2_A13_D29_14 Sch=sw[6]
@@ -222,8 +222,8 @@ set_property -dict {PACKAGE_PIN B12 IOSTANDARD LVCMOS33} [get_ports VGA_VS]
 
 ##USB HID (PS/2)
 
-#set_property -dict { PACKAGE_PIN F4    IOSTANDARD LVCMOS33 } [get_ports { PS2_CLK }]; #IO_L13P_T2_MRCC_35 Sch=ps2_clk
-#set_property -dict { PACKAGE_PIN B2    IOSTANDARD LVCMOS33 } [get_ports { PS2_DATA }]; #IO_L10N_T1_AD15N_35 Sch=ps2_data
+set_property -dict { PACKAGE_PIN F4    IOSTANDARD LVCMOS33 } [get_ports { PS2_CLK }]; #IO_L13P_T2_MRCC_35 Sch=ps2_clk
+set_property -dict { PACKAGE_PIN B2    IOSTANDARD LVCMOS33 } [get_ports { PS2_DATA }]; #IO_L10N_T1_AD15N_35 Sch=ps2_data
 
 
 ##SMSC Ethernet PHY
